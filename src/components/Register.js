@@ -1,6 +1,64 @@
-import React from 'react'
+import React, { useContext } from 'react'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify';
+import { AuthContext } from '../contexts/UserContext';
 
 const Register = () => {
+  const { createUser, updateName, verifyEMail, signInWithGoogle } = useContext(AuthContext)
+
+  const navigate = useNavigate()
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/'
+
+
+
+  //Sign Up Using Email and Password
+  const handleSubmit = (event) => {
+    event.preventDefault()
+
+
+    const name = event.target.name.value;
+    const email = event.target.email.value;
+    const password = event.target.password.value;
+
+    // 1. Create Account
+    createUser(email, password)
+      .then(result => {
+        console.log(result.user)
+        event.target.reset();
+        // 2. Update Name
+        updateName(name)
+          .then(() => {
+            toast.success('Name Updated')
+
+
+            // 3 Email verification sent!
+            verifyEMail()
+              .then(() => {
+                toast.success('Please Check your email for verification Link')
+                navigate(from, { replace: true })
+              })
+              .catch((error) => {
+                toast.error(error.message)
+              })
+          })
+          .catch(error => {
+            toast.error(error.message)
+          })
+      })
+      .catch(error => console.log(error))
+  }
+
+  // 4. Google SignUp
+  const handleGoogleSignIn = () => {
+    signInWithGoogle()
+      .then(result => {
+        console.log(result.user)
+        Navigate(from, { replace: true })
+      })
+      .catch(error => console.error(error))
+  }
+
   return (
     <div className='flex justify-center items-center pt-8'>
       <div className='flex flex-col max-w-md p-6 rounded-md sm:p-10 bg-gray-100 text-gray-900'>
@@ -9,6 +67,7 @@ const Register = () => {
           <p className='text-sm text-gray-400'>Create a new account</p>
         </div>
         <form
+          onSubmit={handleSubmit}
           noValidate=''
           action=''
           className='space-y-12 ng-untouched ng-pristine ng-valid'
@@ -74,7 +133,7 @@ const Register = () => {
           <div className='flex-1 h-px sm:w-16 dark:bg-gray-700'></div>
         </div>
         <div className='flex justify-center space-x-4'>
-          <button aria-label='Log in with Google' className='p-3 rounded-sm'>
+          <button onClick={handleGoogleSignIn} aria-label='Log in with Google' className='p-3 rounded-sm'>
             <svg
               xmlns='http://www.w3.org/2000/svg'
               viewBox='0 0 32 32'
@@ -104,9 +163,9 @@ const Register = () => {
         </div>
         <p className='px-6 text-sm text-center text-gray-400'>
           Already have an account yet?{' '}
-          <a href='#' className='hover:underline text-gray-600'>
+          <Link to='/login' className='hover:underline text-gray-600'>
             Sign In
-          </a>
+          </Link>
           .
         </p>
       </div>
